@@ -1,0 +1,14 @@
+{
+    "version": "0.3.0",
+    "summary": "Library to support use Elm to develop WeChat app",
+    "repository": "https://github.com/yjpark/elm-wx-app.git",
+    "license": "MIT",
+    "source-directories": [
+        "src"
+    ],
+    "exposed-modules": [],
+    "dependencies": {
+        "elm-lang/core": "5.0.0 <= v < 6.0.0"
+    },
+    "elm-version": "0.18.0 <= v < 0.19.0"
+}

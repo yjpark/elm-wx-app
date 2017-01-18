@@ -22,6 +22,7 @@ import WxApp.Api.NavigateBack as NavigateBack
 
 import Task exposing (..)
 import Json.Encode
+import Json.Decode as JsonDecode
 
 
 type alias Data = WxApp.Types.Data
@@ -51,6 +52,7 @@ type Msg
     | SetTabs (List UiTab.Type)
     | SwitchTab UiTab.Key
     | SetCurrentTab UiTab.Key
+    | SetPageStack Data
     | SwitchTabMsg UiTab.Key (Result Error SwitchTab.Msg)
     | PushPage UiPage.Type
     | PushPageMsg UiPage.Type (Result Error NavigateTo.Msg)
@@ -80,6 +82,25 @@ setCurrentTab key switch model =
                         Cmd.none
             in
                 (new_model, new_cmd)
+
+
+setPageStack data model =
+    let
+        dataResult = JsonDecode.decodeValue (JsonDecode.list UiPage.decoder) data
+    in
+        case dataResult of
+            Ok stack ->
+                let
+                    pages = List.reverse stack
+                    new_model =
+                        { model
+                        | pages = pages
+                        }
+                in
+                    (new_model, Cmd.none)
+            Err err ->
+                let _ = Debug.log ("setPageStack failed: " ++ (toString err)) data in
+                (model, Cmd.none)
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -168,6 +189,8 @@ update msg model =
                     }
             in
                 (new_model, Cmd.none)
+        SetPageStack data ->
+            setPageStack data model
         SetCurrentTab tabKey ->
             setCurrentTab tabKey False model
         SwitchTab tabKey ->

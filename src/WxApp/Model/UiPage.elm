@@ -24,3 +24,9 @@ new key url =
     }
 
 
+decoder : Decoder Type
+decoder =
+    decode Type
+        |> required "key" string
+        |> optional "url" string ""
+

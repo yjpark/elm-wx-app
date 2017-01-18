@@ -4,7 +4,11 @@ module WxApp.Mod exposing
 
 import WxApp.Types exposing (..)
 import WxApp.Internal.Wx as Wx
+
 import WxApp.Model.Mod as WxModel
+import WxApp.Model.UiTab as UiTab
+import WxApp.Model.UiPage as UiPage
+
 import WxApp.Api.CheckSession as CheckSession
 import WxApp.Api.Login as Login
 import WxApp.Api.GetUserInfo as GetUserInfo
@@ -12,9 +16,13 @@ import WxApp.Api.GetSystemInfo as GetSystemInfo
 import WxApp.Api.GetStorage as GetStorage
 import WxApp.Api.SetStorage as SetStorage
 import WxApp.Api.RemoveStorage as RemoveStorage
+import WxApp.Api.SwitchTab as SwitchTab
+import WxApp.Api.NavigateTo as NavigateTo
+import WxApp.Api.NavigateBack as NavigateBack
 
 import Task exposing (..)
 import Json.Encode
+
 
 type alias Data = WxApp.Types.Data
 none = WxApp.Types.none
@@ -40,11 +48,38 @@ type Msg
     | RemoveWxModelMsg (Result Error Res)
     | SaveWxModelMsg (Result Error Res)
     | GetUserInfoMsg (Result Error GetUserInfo.Msg)
+    | SetTabs (List UiTab.Type)
+    | SwitchTab UiTab.Key
+    | SetCurrentTab UiTab.Key
+    | SwitchTabMsg UiTab.Key (Result Error SwitchTab.Msg)
+    | PushPage UiPage.Type
+    | PushPageMsg UiPage.Type (Result Error NavigateTo.Msg)
+    | PopPage UiPage.Key
+    | PopPageMsg UiPage.Key (Result Error NavigateBack.Msg)
 
 
 cmd : msg -> Cmd msg
 cmd msg =
   perform identity (succeed msg)
+
+
+setCurrentTab key switch model =
+    case WxModel.getTab key model of
+        Nothing ->
+            let _ = Debug.log ("Tab Not Exist: " ++ key) model.tabs in
+            (model, Cmd.none)
+        Just tab ->
+            let
+                new_model =
+                    { model
+                    | currentTabKey = key
+                    }
+                new_cmd = if switch then
+                        SwitchTab.cmd tab.url <| SwitchTabMsg key
+                    else
+                        Cmd.none
+            in
+                (new_model, new_cmd)
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -125,5 +160,46 @@ update msg model =
                 ( new_model
                 , SetStorage.cmd "_WxApp.WxModel" (WxModel.encode new_model) SaveWxModelMsg
                 )
+        SetTabs tabs ->
+            let
+                new_model =
+                    { model
+                    | tabs = tabs
+                    }
+            in
+                (new_model, Cmd.none)
+        SetCurrentTab tabKey ->
+            setCurrentTab tabKey False model
+        SwitchTab tabKey ->
+            setCurrentTab tabKey True model
+        PushPage page ->
+            case WxModel.getPage page.key model of
+                Nothing ->
+                    let
+                        new_model =
+                            { model
+                            | pages = page :: model.pages
+                            }
+                        new_cmd = NavigateTo.cmd page.url <| PushPageMsg page
+                    in
+                        (new_model, new_cmd)
+                Just oldPage ->
+                    let _ = Debug.log ("Page already shown " ++ (toString oldPage)) page in
+                    (model, cmd <| PushPageMsg page (Err <| ApiError none "Already Shown"))
+        PopPage pageKey ->
+            case WxModel.getPageIndex pageKey model of
+                Nothing ->
+                    let _ = Debug.log ("Page not shown " ++ pageKey) model.pages in
+                    (model, cmd <| PopPageMsg pageKey (Err <| ApiError none "Not Shown"))
+                Just index ->
+                    let
+                        count = index + 1
+                        new_model =
+                            { model
+                            | pages = List.drop count model.pages
+                            }
+                        new_cmd = NavigateBack.cmd count <| PopPageMsg pageKey
+                    in
+                        (new_model, new_cmd)
         _ ->
             (model, Cmd.none)

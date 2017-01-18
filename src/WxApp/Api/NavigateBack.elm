@@ -1,4 +1,4 @@
-module WxApp.Api.SetStorage exposing (Msg, call, cmd)
+module WxApp.Api.NavigateBack exposing (Msg, call, cmd)
 
 import WxApp.Types exposing (..)
 import WxApp.Util exposing (..)

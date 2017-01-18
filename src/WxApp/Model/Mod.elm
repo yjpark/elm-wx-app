@@ -3,6 +3,8 @@ module WxApp.Model.Mod exposing (..)
 import WxApp.Model.SystemInfo as SystemInfo
 import WxApp.Model.UserInfo as UserInfo
 import WxApp.Model.UserSecret as UserSecret
+import WxApp.Model.UiTab as UiTab
+import WxApp.Model.UiPage as UiPage
 
 import WxApp.Types exposing (..)
 import WxApp.Util exposing (..)
@@ -16,6 +18,9 @@ type alias Type =
     , userCode : String
     , userInfo : UserInfo.Type
     , userSecret : UserSecret.Type
+    , tabs : List UiTab.Type
+    , currentTabKey : UiTab.Key
+    , pages : List UiPage.Type
     }
 
 null : Type
@@ -24,6 +29,9 @@ null =
     , userCode = ""
     , userInfo = UserInfo.null
     , userSecret = UserSecret.null
+    , tabs = []
+    , currentTabKey = ""
+    , pages = []
     }
 
 
@@ -43,6 +51,9 @@ decoder =
         |> required "userCode" string
         |> required "userInfo" UserInfo.decoder
         |> required "userSecret" UserSecret.decoder
+        |> hardcoded []
+        |> hardcoded ""
+        |> hardcoded []
 
 
 encode : Type -> Data
@@ -54,4 +65,31 @@ encode model =
         |> dictToData
 
 
+getTab : UiTab.Key -> Type -> Maybe UiTab.Type
+getTab key model =
+    model.tabs
+        |> List.filter (\tab -> tab.key == key)
+        |> List.head
 
+
+getPage : UiPage.Key -> Type -> Maybe UiPage.Type
+getPage key model =
+    model.pages
+        |> List.filter (\tab -> tab.key == key)
+        |> List.head
+
+
+getPageIndex : UiPage.Key -> Type -> Maybe Int
+getPageIndex key model =
+    let
+        filter = (\index page ->
+            if page.key == key then
+                index
+            else
+                -1
+        )
+    in
+        model.pages
+            |> List.indexedMap filter
+            |> List.filter (\index -> index >= 0)
+            |> List.head

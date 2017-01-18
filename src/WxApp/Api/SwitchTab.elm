@@ -1,4 +1,4 @@
-module WxApp.Api.NavigateTo exposing (Msg, call, cmd)
+module WxApp.Api.SwitchTab exposing (Msg, call, cmd)
 
 import WxApp.Types exposing (..)
 import WxApp.Util exposing (..)
@@ -24,7 +24,7 @@ encodeData url =
 
 call : String -> Task Error Msg
 call url =
-    Wx.call "navigateTo" (encodeData url) onSucceed
+    Wx.call "switchTab" (encodeData url) onSucceed
 
 
 cmd : String -> (Result Error Msg -> msg) -> Cmd msg

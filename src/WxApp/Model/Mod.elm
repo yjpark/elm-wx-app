@@ -35,6 +35,15 @@ null =
     }
 
 
+resetSession : Type -> Type
+resetSession model =
+    { model
+    | userCode = ""
+    , userInfo = UserInfo.null
+    , userSecret = UserSecret.null
+    }
+
+
 mergeSaved : Type -> Type -> Type
 mergeSaved saved model =
     { model

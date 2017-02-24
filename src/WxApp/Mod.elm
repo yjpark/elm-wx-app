@@ -119,9 +119,12 @@ update msg model =
             , CheckSession.cmd CheckSessionMsg
             )
         DoLogin ->
-            ( model
-            , Login.cmd LoginMsg
-            )
+            let
+                new_model = WxModel.resetSession model
+            in
+                ( new_model
+                , Login.cmd LoginMsg
+                )
         DoLoadWxModel ->
             ( model
             , GetStorage.cmd "_WxApp.WxModel" WxModel.decoder LoadWxModelMsg
@@ -141,9 +144,12 @@ update msg model =
             , cmd DoLoadWxModel
             )
         CheckSessionMsg (Err _) ->
-            ( model
-            , cmd DoLogin
-            )
+            let
+                new_model = WxModel.resetSession model
+            in
+                ( new_model
+                , cmd DoLogin
+                )
         LoginMsg (Ok code) ->
             ( { model
                 | userCode = code

@@ -38,11 +38,13 @@ null = WxModel.null
 type Msg
     = DoInit
     | DoGetSystemInfo
+    | DoReloadSystemInfo
     | DoCheckSession
     | DoLogin
     | DoLoadWxModel
     | DoGetUserInfo
     | GetSystemInfoMsg (Result Error GetSystemInfo.Msg)
+    | ReloadSystemInfoMsg (Result Error GetSystemInfo.Msg)
     | CheckSessionMsg (Result Error CheckSession.Msg)
     | LoginMsg (Result Error Login.Msg)
     | LoadWxModelMsg (Result Error WxModel.Type)
@@ -114,6 +116,10 @@ update msg model =
             ( model
             , GetSystemInfo.cmd GetSystemInfoMsg
             )
+        DoReloadSystemInfo ->
+            ( model
+            , GetSystemInfo.cmd ReloadSystemInfoMsg
+            )
         DoCheckSession ->
             ( model
             , CheckSession.cmd CheckSessionMsg
@@ -138,6 +144,12 @@ update msg model =
                 | systemInfo = systemInfo
               }
             , cmd DoCheckSession
+            )
+        ReloadSystemInfoMsg (Ok systemInfo) ->
+            ( { model
+                | systemInfo = systemInfo
+              }
+            , Cmd.none
             )
         CheckSessionMsg (Ok _) ->
             ( model
